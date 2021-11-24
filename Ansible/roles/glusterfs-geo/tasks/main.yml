@@ -1,0 +1,67 @@
+---
+- name: Install Glusterfs Geo Replication
+  yum:
+    name: glusterfs-geo-replication
+    state: present
+
+- name: Add authorized keys
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', 'id_rsa.pub') }}"
+
+- name: copy ssh keys
+  copy:
+    src: "{{ item.file }}"
+    dest: /root/.ssh
+    mode: "{{ item.mode }}"
+    owner: root
+    group: root
+  with_items:
+    - { file: 'id_rsa', mode: '0600' }
+    - { file: 'id_rsa.pub', mode: '0644' }
+
+- name: Enable Root login on sshd_config
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: 'PermitRootLogin(\s+.*)'
+    replace: "PermitRootLogin yes"
+  notify: Restart sshd
+
+- meta: flush_handlers
+
+- name: Turn off Performance quick-read
+  shell: gluster volume set {{ gfs_volume_name }} performance.quick-read off
+  run_once: true
+  delegate_to: "{{ groups['slave'][0] }}"
+
+- name: Enable cluster shared storage
+  shell: gluster volume set all cluster.enable-shared-storage enable
+  run_once: true
+  delegate_to: "{{ item }}"
+  loop:
+    - "{{ groups['slave'][0] }}"
+    - "{{ groups['master'][0] }}"
+
+- name: Create common pem pub file
+  shell: "gluster system:: execute gsec_create"
+  run_once: true
+  delegate_to: "{{ item }}"
+  loop:
+    - "{{ groups['slave'][0] }}"
+    - "{{ groups['master'][0] }}"
+
+- block:
+    - name: Push pem file on slave nodes
+      shell: gluster volume geo-replication {{ gfs_volume_name }} {{ groups['slave'][0] }}::{{ gfs_volume_name }} create push-pem force
+
+    - name: Add replication config values
+      shell: gluster volume geo-replication {{ gfs_volume_name }} {{ groups['slave'][0] }}::{{ gfs_volume_name }} config {{ item.key }} {{ item.value }}
+      loop:
+        - { key: 'use_meta_volume', value: 'true' }
+        - { key: 'sync-jobs', value: '64' }
+
+    - name: Start replication on master
+      shell: gluster volume geo-replication {{ gfs_volume_name }} {{ groups['slave'][0] }}::{{ gfs_volume_name }} start
+  run_once: true
+  delegate_to: "{{ groups['master'][0] }}"

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+### Setup disk and format type
+pvcreate  {{ disk_path }}
+vgcreate {{ disk_vg_name }} {{ disk_path }}
+
+### Create lvm
+lvcreate -n {{ brick_name }} {{ disk_vg_name }} -l+100%FREE
+mkfs.xfs /dev/{{ disk_vg_name }}/{{ brick_name }}
+
+### Self mount on the node
+mkdir -p {{ data_path }}
+mount /dev/{{ disk_vg_name }}/{{ brick_name }} {{ data_path }}
+
+### Create gluster volume dir
+mkdir -p {{ data_path }}/{{ gfs_volume_name }}
+
+sleep 10

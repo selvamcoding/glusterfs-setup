@@ -1,0 +1,92 @@
+---
+- name: Disable SELINUX
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: "SELINUX=*"
+    line: "SELINUX=disabled"
+
+- name: setenforce
+  shell: /sbin/setenforce 0
+
+- name: Disable firewall
+  service:
+    name: firewalld
+    state: started
+    enabled: false
+
+- name: Install glusterfs repo
+  yum:
+    name: "{{ gfs_release }}"
+    state: present
+
+- name: Install glusterfs-server
+  yum:
+    name: glusterfs-server
+    state: present
+  notify: Start glusterfs service
+
+- meta: flush_handlers
+
+- name: copy disk format script
+  template:
+    src: create_volume.sh.j2
+    dest: /tmp/create_volume.sh
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Run format script
+  shell: sudo /tmp/create_volume.sh
+
+- name: Establish Peer Probe
+  shell: gluster peer probe {{ item }}
+  run_once: true
+  delegate_to: "{{ groups['glusterfs'][0] }}"
+  loop: "{{ groups['glusterfs'][1:] }}"
+
+- name: Define gfs_vol_list variable
+  set_fact:
+    gfs_vol_list: ""
+
+- name: Assign values to gfs_vol_list variable
+  set_fact:
+    gfs_vol_list: "{{ item + ':' + data_path + '/' + gfs_volume_name + ' ' + gfs_vol_list }}"
+  run_once: true
+  delegate_to: "{{ groups['glusterfs'][0] }}"
+  loop: "{{ groups['glusterfs'] }}"
+
+- name: Create Gluster Volume
+  block:
+    - name: Run create volume
+      shell: gluster volume create {{ gfs_volume_name }} replica {{ replicas }} {{ gfs_vol_list }} force
+
+    - name: Start volume
+      shell: gluster volume start {{ gfs_volume_name }}
+  run_once: true
+  delegate_to: "{{ groups['glusterfs'][0] }}"
+
+- name: Create glusterfs directory
+  file:
+    path: /mnt/glusterfs
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+
+- name: mount glusterfs directory
+  mount:
+    src: 127.0.0.1:/vol1
+    path: /mnt/glusterfs
+    fstype: glusterfs
+    opts: defaults,_netdev
+    state: present
+
+- name: mount bricks
+  mount:
+    src: /dev/{{ disk_vg_name }}/{{ brick_name }}
+    path: "{{ data_path }}"
+    fstype: xfs
+    state: present
+
+- name: mount fstab
+  shell: mount -a

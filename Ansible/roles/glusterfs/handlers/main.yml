@@ -1,0 +1,6 @@
+---
+- name: Start glusterfs service
+  service:
+    name: glusterd
+    state: restarted
+    enabled: true

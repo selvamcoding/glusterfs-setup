@@ -1,0 +1,7 @@
+---
+- hosts: glusterfs
+  remote_user: "{{ ansible_ssh_user }}"
+  become: true
+  gather_facts: false
+  roles:
+    - glusterfs
