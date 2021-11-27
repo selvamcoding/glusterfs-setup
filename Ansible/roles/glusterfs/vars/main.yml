@@ -1,0 +1,7 @@
+---
+gfs_release: "centos-release-gluster9"
+disk_path: "/dev/sdb"
+brick_name: "{{ gfs_volume_name }}_brick"
+disk_vg_name: "vg_gfs"
+data_path: "/data/glusterfs"
+replicas: 2
