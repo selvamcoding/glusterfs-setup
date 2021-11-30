@@ -36,7 +36,7 @@
     group: root
 
 - name: Run format script
-  shell: sudo /tmp/create_volume.sh
+  shell: /tmp/create_volume.sh
 
 - name: Establish Peer Probe
   shell: gluster peer probe {{ item }}
@@ -75,7 +75,7 @@
 
 - name: mount glusterfs directory
   mount:
-    src: 127.0.0.1:/vol1
+    src: 127.0.0.1:/{{ gfs_volume_name }}
     path: /mnt/glusterfs
     fstype: glusterfs
     opts: defaults,_netdev
