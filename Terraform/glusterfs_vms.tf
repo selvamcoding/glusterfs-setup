@@ -3,13 +3,13 @@ data "google_compute_zones" "available" {
 }
 
 module "glusterfs" {
-  source = "./modules/gcp_vm_instance"
-  count = var.vm_count
-  name = "${var.vm_name}-n${count.index + 1}"
-  machine_type = var.machine_type
+  source         = "./modules/gcp_vm_instance"
+  count          = var.vm_count
+  name           = "${var.vm_name}-n${count.index + 1}"
+  machine_type   = var.machine_type
   boot_disk_size = var.boot_disk_size
-  region = var.region
-  zone = data.google_compute_zones.available.names[count.index % length(data.google_compute_zones.available.names)]
+  region         = var.region
+  zone           = data.google_compute_zones.available.names[count.index % length(data.google_compute_zones.available.names)]
 }
 
 
@@ -22,8 +22,8 @@ resource "google_compute_disk" "data" {
 }
 
 resource "google_compute_attached_disk" "attach_ssd" {
-  count = var.vm_count
-  disk = google_compute_disk.data[count.index].self_link
+  count    = var.vm_count
+  disk     = google_compute_disk.data[count.index].self_link
   instance = module.glusterfs[count.index].self_link
 }
 
