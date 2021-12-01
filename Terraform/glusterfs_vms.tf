@@ -27,6 +27,13 @@ resource "google_compute_attached_disk" "attach_ssd" {
   instance = module.glusterfs[count.index].self_link
 }
 
+resource "google_compute_instance_group" "vm_groups" {
+  count     = var.vm_count
+  name      = "${var.vm_name}-master-n${count.index + 1}"
+  zone      = module.glusterfs[count.index].zone
+  instances = [module.glusterfs[count.index].id]
+}
+
 resource "null_resource" "inventory" {
   depends_on = [google_compute_attached_disk.attach_ssd]
 
