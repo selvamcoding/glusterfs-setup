@@ -2,6 +2,8 @@
 
 This repository has Terraform code and Ansible playbook to create required instances on GCP Cloud and setup Glusterfs on the nodes automatically.
 
+The terraform code will create instance groups as well for the GlusterFS instances, So that the LB can be created later to use as source mount point.
+
 If you have created the instances on on-premise or other cloud, still the ansible playbook helps on setting up Glusterfs.
 
 Also, it has ansible playbook for Gluster Geo-Replication Setup.

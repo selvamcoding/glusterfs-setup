@@ -24,11 +24,3 @@ resource "google_compute_instance" "default" {
     scopes = ["cloud-platform"]
   }
 }
-
-output "vm_ip" {
-  value = google_compute_instance.default.network_interface.0.network_ip
-}
-
-output "self_link" {
-  value = google_compute_instance.default.self_link
-}
