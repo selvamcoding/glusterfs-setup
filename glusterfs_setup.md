@@ -1,4 +1,6 @@
 # Manual Steps
+This Documentation helps to set up GlusterFS cluster with HA and Geo-Replication through manual Executions.
+
 ## GlusterFS Setup
 #### Follow steps on all glustefs nodes
 1) Install the latest glusterfs package on your all instances

@@ -2,7 +2,7 @@
 - name: Disable SELINUX
   lineinfile:
     path: /etc/selinux/config
-    regexp: "SELINUX=*"
+    regexp: "^SELINUX="
     line: "SELINUX=disabled"
 
 - name: setenforce
