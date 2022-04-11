@@ -150,7 +150,7 @@ Now your Secondary is ready for applications to write.
 #### Replicating data to Original(previous) Primary
 3) If the Original  Primary is online, Stop synchronizing to the Original Secondary, Run on the Original Primary node
 
-        # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> delete
+        # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> stop force
         # gluster volume set <gfs_voulme> features.read-only on
         # gluster volume set <gfs_voulme> geo-replication.indexing off
         # gluster volume set <gfs_voulme> changelog off
@@ -184,7 +184,7 @@ In case if you want to switch back to the Original Primary, please follow the be
 
 3) After the checkpoint is complete, stop the current geo-replication session between the original secondary and original primary
 
-        # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> delete
+        # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> stop
         # gluster volume set <gfs_voulme> features.read-only on
         # gluster volume set <gfs_voulme> geo-replication.indexing off
         # gluster volume set <gfs_voulme> changelog off
