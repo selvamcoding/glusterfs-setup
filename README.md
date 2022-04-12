@@ -53,3 +53,42 @@ If you want setup GlusterFS for DR region backup, you can follow the below steps
 ```shell
 ansible-playbook -i <inventory-file> glusterfs-geo-replication.yml -e "ansible_ssh_user=<ansible_ssh_user>"
 ```
+
+# GlusterFS-Exporter Prometheus Monitoring Setup
+
+https://github.com/gluster/gluster-prometheus#prometheus-exporter-for-gluster-metrics
+
+1) Install goang and it packages
+```shell
+yum install golang git
+```
+
+2) Define GOPATH and install gluster-exporter
+```shell
+export GOPATH=/opt/go
+export PATH=$PATH:$GOPATH/bin
+mkdir -p $GOPATH/bin
+ 
+mkdir -p $GOPATH/src/github.com/gluster
+cd $GOPATH/src/github.com/gluster
+git clone https://github.com/gluster/gluster-prometheus.git
+cd gluster-prometheus
+ 
+# Install the required dependancies.
+# Hint: assumes that GOPATH and PATH are already configured.
+./scripts/install-reqs.sh
+ 
+PREFIX=/usr make
+PREFIX=/usr make install
+```
+
+3) Once the install is completed successfully, update "gluster-cluster-id" with cluster name on `/etc/gluster-exporter/gluster-exporter.toml` file.
+   cluster name is just a custom name to differentiate metrics from other cluster metrics in the grafana dashboard.
+
+4) Start and enable gluster-exporter service
+```shell
+# systemctl enable gluster-exporter
+# systemctl start gluster-exporter
+```
+
+5) Verify metrics at URL http://<ip_address>:9713/metrics
