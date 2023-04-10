@@ -2,7 +2,7 @@
 This Documentation helps to set up GlusterFS cluster with HA and Geo-Replication through manual Executions.
 
 ## GlusterFS Setup
-#### Follow steps on all glustefs nodes
+#### Follow steps on all glusterfs nodes
 1) Install the latest glusterfs package on your all instances
    
         # yum install -y centos-release-gluster9
@@ -24,11 +24,11 @@ This Documentation helps to set up GlusterFS cluster with HA and Geo-Replication
         # systemctl start glusterd.service
 
 4) Set variables which will be used in multiple places
-   
-        # brick_name=`hostname -s`_brick
+
+        # gfs_volume="vol1"
+        # brick_name=${gfs_volume}_brick
         # disk_path=/dev/sdb
         # data_path=/data/glusterfs
-        # gfs_volume="vol1"
 
 5) Create Physical volume and volume group
    
@@ -118,13 +118,11 @@ This Documentation helps to set up GlusterFS cluster with HA and Geo-Replication
 9) Update the configs for geo-replication
 
         # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> config use_meta_volume true
-        # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> config sync-jobs 8
 
 10) Start the geo-replication and verify the status
 
         # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> start
 
-        # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> status
         # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> status detail
 
         # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> config log-file
@@ -151,8 +149,9 @@ Now your Secondary is ready for applications to write.
 3) If the Original  Primary is online, Stop synchronizing to the Original Secondary, Run on the Original Primary node
 
         # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> stop force
-        # gluster volume set <gfs_voulme> performance.quick-read off
         # gluster volume set <gfs_voulme> features.read-only on
+        # gluster volume reset <gfs_voulme> geo-replication.indexing force
+        # gluster volume reset <gfs_voulme> changelog
 
 4) Push pem from the current Primary to Original Primary
 
@@ -161,10 +160,7 @@ Now your Secondary is ready for applications to write.
 5) Set config special-syn-mode and Disable the gfid-conflict-resolution
 
         # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> config use_meta_volume true
-        # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> config sync-jobs 8
         # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> config special-sync-mode recover
-        # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> config gfid-conflict-resolution false
-        
 
 6) Start the geo-replication from current Primary to Original Primary
 
@@ -195,10 +191,17 @@ In case if you want to switch back to the Original Primary, please follow the be
 4) Disable read-only on the Original Primary cluster volume
 
         # gluster volume set <gfs_voulme> features.read-only off
+        # gluster volume set <gfs_voulme> geo-replication.indexing on
+        # gluster volume set <gfs_voulme> changelog on
 
 5) Start the geo replication on Original Primary node
 
-        # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> start
+        # gluster volume geo-replication <gfs_voulme> <secondary_main_IPAddr>::<gfs_volume> delete
+        # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> create push-pem force
+        # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> config use_meta_volume true
+        # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> config special-sync-mode recover
+        # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> start
+        # gluster volume geo-replication <gfs_voulme> <Original_Primary_main_IPAddr>::<gfs_volume> status
 
 #### Troubleshooting
 If the geo-replication fails, worst case scenario, delete session and re-create it.
