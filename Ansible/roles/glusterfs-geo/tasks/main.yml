@@ -59,7 +59,6 @@
       shell: gluster volume geo-replication {{ gfs_volume_name }} {{ groups['slave'][0] }}::{{ gfs_volume_name }} config {{ item.key }} {{ item.value }}
       loop:
         - { key: 'use_meta_volume', value: 'true' }
-        - { key: 'sync-jobs', value: '64' }
 
     - name: Start replication on master
       shell: gluster volume geo-replication {{ gfs_volume_name }} {{ groups['slave'][0] }}::{{ gfs_volume_name }} start
